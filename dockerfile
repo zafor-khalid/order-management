@@ -1,32 +1,23 @@
-# Use the latest official Golang image to build the application
-FROM golang:1.23.2-alpine3.20 as builder
+# Use an official Go image with version 1.23
+FROM golang:1.23-alpine
 
-# Set the Current Working Directory inside the container
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum files to the container
+# Copy go.mod and go.sum files first to leverage Docker's layer caching
 COPY go.mod go.sum ./
 
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
+# Download dependencies
 RUN go mod download
 
-# Copy the source code into the container
+# Copy the entire project into the container
 COPY . .
 
-# Build the Go app
-RUN go build -o zafor-dev main.go
+# Navigate to the directory containing the main file
+WORKDIR /app/cmd/api
 
-# Start a new stage from scratch
-FROM alpine:latest  
+# Build the Go application
+RUN go build -o /app/main .
 
-# Set the Current Working Directory inside the container
-WORKDIR /root/
-
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/zafor-dev .
-
-# Expose port 8080 to the outside world
-EXPOSE 8080
-
-# Command to run the executable
-CMD ["./zafor-dev"]
+# Set the entry point to the compiled binary
+CMD ["/app/main"]

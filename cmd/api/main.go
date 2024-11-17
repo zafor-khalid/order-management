@@ -1,28 +1,29 @@
 package main
 
 import (
+	"log"
 	"order-management/config"
 	"order-management/internal/routers"
-	"order-management/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	logger.Initialize("INFO")
-
-	// Load configuration
-	cfg, err := config.LoadConfig()
+	// Load configuration first
+	err := config.LoadConfig()
 	if err != nil {
-		logger.Error("Failed to load config: %v", err)
+		log.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	// Initialize the database using the loaded configuration
+	config.InitDB()
 
 	// Pass services to controllers if necessary
 	router := gin.Default()
 	routers.LoadRoutes(router)
 
 	// Start server
-	if err := router.Run(":" + cfg.Port); err != nil {
-		logger.Error("Failed to start server: %v", err)
+	if err := router.Run(":8081"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
 	}
 }
