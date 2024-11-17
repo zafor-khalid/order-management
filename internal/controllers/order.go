@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"order-management/internal/models"
 	"order-management/internal/services"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -69,28 +70,56 @@ func CreateOrder(c *gin.Context) {
 
 
 
-// GetOrders fetches all orders
 func GetOrders(c *gin.Context) {
-	// page := c.DefaultQuery("page", "1")
-	// limit := c.DefaultQuery("limit", "10")
+	// Parse query parameters
+	transferStatus := c.Query("transfer_status")
+	archive := c.Query("archive")
+	limit := c.DefaultQuery("limit", "10")
+	page := c.DefaultQuery("page", "1")
 
-	// // Call the service to fetch orders
-	// orders, err := services.GetOrders(page, limit)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"message": "Failed to fetch orders",
-	// 		"type":    "error",
-	// 		"code":    http.StatusInternalServerError,
-	// 	})
-	// 	return
-	// }
+	// Convert limit and page to integers
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil || limitInt <= 0 {
+		limitInt = 10 // Default to 10 if invalid
+	}
 
-	// // Send success response
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"message": "Orders fetched successfully",
-	// 	"data":    orders,
-	// })
+	pageInt, err := strconv.Atoi(page)
+	if err != nil || pageInt <= 0 {
+		pageInt = 1 // Default to 1 if invalid
+	}
+
+	// Fetch orders from the service layer
+	orders, total, err := services.FetchOrders(transferStatus, archive, limitInt, pageInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Failed to fetch orders",
+			"type":    "error",
+			"code":    http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Calculate pagination details
+	lastPage := (total + limitInt - 1) / limitInt 
+	totalInPage := len(orders)
+
+	// Prepare the response
+	response := gin.H{
+		"message": "Orders successfully fetched.",
+		"type":    "success",
+		"code":    http.StatusOK,
+		"data": gin.H{
+			"data":          orders,
+			"total":         total,
+			"current_page":  pageInt,
+			"per_page":      limitInt,
+			"total_in_page": totalInPage,
+			"last_page":     lastPage,
+		},
+	}
+	c.JSON(http.StatusOK, response)
 }
+
 
 // CancelOrder cancels an order by its consignment ID
 func CancelOrder(c *gin.Context) {

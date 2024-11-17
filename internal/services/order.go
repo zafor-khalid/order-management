@@ -8,6 +8,7 @@ import (
 	"order-management/internal/repositories"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -58,6 +59,9 @@ func CreateOrder(order models.Order) (models.Order, error) {
 	order.RecipientArea = 1
 	order.Status = "Pending"
 	order.RecipientCity = matchedCity
+	order.CreatedAt = time.Now().Format("2024-05-23 14:05:34")
+	order.UpdatedAt = time.Now().Format("2024-05-23 14:05:34")
+	order.Archived = false
 	
 	consignmentID, err := generateConsignmentID()
 	if err != nil {
@@ -173,4 +177,43 @@ func ValidateOrderRequest(order *models.Order) error {
 
 func (ve *ValidationError) Error() string {
     return ve.Message
+}
+
+
+func FetchOrders(transferStatus string, archive string, limit int, page int) ([]map[string]interface{}, int, error) {
+	// Calculate offset for pagination
+	offset := (page - 1) * limit
+
+	// Query the database
+	orders, total, err := repositories.GetOrdersFromDB(transferStatus, archive, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Format orders for the JSON response
+	formattedOrders := []map[string]interface{}{}
+	for _, order := range orders {
+		formattedOrders = append(formattedOrders, map[string]interface{}{
+			"order_consignment_id": order.ConsignmentID,
+			"order_created_at":     order.CreatedAt,
+			"order_description":    order.ItemDescription,
+			"merchant_order_id":    order.MerchantOrderID,
+			"recipient_name":       order.RecipientName,
+			"recipient_address":    order.RecipientAddress,
+			"recipient_phone":      order.RecipientPhone,
+			"order_amount":         order.AmountToCollect,
+			"total_fee":            order.AmountToCollect+ order.DeliveryFee - order.CodFee - order.Discount,
+			"instruction":          order.SpecialInstruction,
+			"order_type_id":        order.DeliveryType,
+			"cod_fee":              order.CodFee,
+			"promo_discount":       order.Discount,
+			"delivery_fee":         order.DeliveryFee,
+			"order_status":         order.Status,
+			"order_type":           order.DeliveryType,
+			"item_type":            order.ItemType,
+			"archived":             order.Archived,
+		})
+	}
+
+	return formattedOrders, total, nil
 }

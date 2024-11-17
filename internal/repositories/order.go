@@ -19,18 +19,7 @@ func CreateOrder(order models.Order) (models.Order, error) {
 	return order, nil
 }
 
-// GetOrders retrieves orders from the database with pagination
-func GetOrders(page, limit int) ([]models.Order, error) {
-	var orders []models.Order
 
-	// Fetch the orders with pagination
-	if err := config.DB.Offset((page - 1) * limit).Limit(limit).Find(&orders).Error; err != nil {
-		return nil, fmt.Errorf("failed to fetch orders: %v", err)
-	}
-
-	// Return the fetched orders
-	return orders, nil
-}
 
 // CancelOrder updates the order status to 'Cancelled' using the consignment ID
 func CancelOrder(consignmentID string) error {
@@ -49,4 +38,33 @@ func CancelOrder(consignmentID string) error {
 
 	// Return success
 	return nil
+}
+
+
+func GetOrdersFromDB(transferStatus string, archive string, limit int, offset int) ([]models.Order, int, error) {
+	var orders []models.Order
+	var total int64
+
+	// Query builder
+	query := config.DB.Model(&models.Order{})
+
+	// Apply filters
+	if transferStatus != "" {
+		query = query.Where("status = ?", transferStatus)
+	}
+	if archive != "" {
+		query = query.Where("archived = ?", archive)
+	}
+
+	// Count total records
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Fetch paginated results
+	if err := query.Offset(offset).Limit(limit).Find(&orders).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return orders, int(total), nil
 }

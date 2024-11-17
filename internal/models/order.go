@@ -1,12 +1,8 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
-
 // Order represents an order in the system
 type Order struct {
-	gorm.Model
+	ID                 uint    `gorm:"primaryKey"`
 	StoreID            int     `json:"store_id"`
 	MerchantOrderID    string  `json:"merchant_order_id"`
 	RecipientName      string  `json:"recipient_name" binding:"required"`
@@ -25,8 +21,15 @@ type Order struct {
 	DeliveryFee        float64 `json:"delivery_fee"`
 	CodFee             float64 `json:"cod_fee"`
 	Status             string  `json:"status"`
-	ConsignmentID      string  `json:"consignment_id"`
+	ConsignmentID      string  `json:"consignment_id"` 
+	Discount           float64 `json:"discount"`
+	CreatedAt          string  `json:"created_at"`
+	UpdatedAt          string  `json:"updated_at"`
+	Archived           bool    `json:"archived"`
 }
+
+
+
 
 
 
