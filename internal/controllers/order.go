@@ -4,15 +4,27 @@ import (
 	"net/http"
 	"order-management/internal/models"
 	"order-management/internal/services"
-	"strconv"
+	"order-management/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
+// CreateOrder handles the creation of a new order.
+// It expects a JSON payload containing the order details in the request body.
+//
+// @Summary Create a new order
+// @Description Creates a new order with the provided details
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param order body models.Order true "Order details"
+// @Success 200 {object} gin.H "Order created successfully"
+// @Failure 422 {object} gin.H "Validation errors"
+// @Failure 500 {object} gin.H "Internal server error"
+// @Router /api/v1/orders [post]
 
 func CreateOrder(c *gin.Context) {
 	var order models.Order
-
 	if err := c.ShouldBindJSON(&order); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"message": "Please fix the given errors",
@@ -67,27 +79,27 @@ func CreateOrder(c *gin.Context) {
 	})
 }
 
-
-
+// GetOrders handles the GET /api/v1/orders/all endpoint.
+// It retrieves a paginated list of orders with optional filtering.
+//
+// Query Parameters:
+//   - transfer_status: Filter orders by transfer status
+//   - archive: Filter orders by archive status
+//   - limit: Number of orders per page (default: 10)
+//   - page: Page number (default: 1)
+//
+// Returns:
+//   - 200 OK: Successfully retrieved orders with pagination details
+//   - 500 Internal Server Error: If there was an error fetching the orders
 
 func GetOrders(c *gin.Context) {
-	// Parse query parameters
 	transferStatus := c.Query("transfer_status")
 	archive := c.Query("archive")
 	limit := c.DefaultQuery("limit", "10")
 	page := c.DefaultQuery("page", "1")
 
-	// Convert limit and page to integers
-	limitInt, err := strconv.Atoi(limit)
-	if err != nil || limitInt <= 0 {
-		limitInt = 10 // Default to 10 if invalid
-	}
-
-	pageInt, err := strconv.Atoi(page)
-	if err != nil || pageInt <= 0 {
-		pageInt = 1 // Default to 1 if invalid
-	}
-
+	limitInt, pageInt := utils.ParsePaginationParams(limit, page)
+	
 	// Fetch orders from the service layer
 	orders, total, err := services.FetchOrders(transferStatus, archive, limitInt, pageInt)
 	if err != nil {
@@ -100,8 +112,7 @@ func GetOrders(c *gin.Context) {
 	}
 
 	// Calculate pagination details
-	lastPage := (total + limitInt - 1) / limitInt 
-	totalInPage := len(orders)
+    lastPage := utils.CalculateLastPage(total, limitInt)
 
 	// Prepare the response
 	response := gin.H{
@@ -113,7 +124,7 @@ func GetOrders(c *gin.Context) {
 			"total":         total,
 			"current_page":  pageInt,
 			"per_page":      limitInt,
-			"total_in_page": totalInPage,
+			"total_in_page": len(orders),
 			"last_page":     lastPage,
 		},
 	}
@@ -122,8 +133,15 @@ func GetOrders(c *gin.Context) {
 
 
 // CancelOrder handles the cancellation of an order
+//
+// Parameters:
+//   - consignment_id: The ID of the order to be cancelled (URL parameter)
+//
+// Returns:
+//   - 200 OK: Successfully cancelled the order
+//   - 400 Bad Request: If the order cannot be cancelled
+
 func CancelOrder(c *gin.Context) {
-	// Retrieve the order ID from the URL parameter
 	consignmentID := c.Param("consignment_id")
 
 	// Call the service to cancel the order

@@ -8,8 +8,6 @@ import (
 
 // CreateOrder saves the provided order to the database and returns the created order
 func CreateOrder(order models.Order) (models.Order, error) {
-	fmt.Printf("Creating order with details: %+v\n", order)
-
 	// Save the order to the database
 	if err := config.DB.Create(&order).Error; err != nil {
 		return models.Order{}, fmt.Errorf("failed to save order: %v", err)
@@ -18,8 +16,6 @@ func CreateOrder(order models.Order) (models.Order, error) {
 	// Return the created order
 	return order, nil
 }
-
-
 
 // CancelOrder updates the order status to 'Cancelled' using the consignment ID
 func CancelOrder(consignmentID string) error {
@@ -40,8 +36,8 @@ func CancelOrder(consignmentID string) error {
 	return nil
 }
 
-
-func GetOrdersFromDB(transferStatus string, archive string, limit int, offset int) ([]models.Order, int, error) {
+// GetOrders retrieves a paginated list of orders with optional filtering by transfer status and archive status
+func GetOrders(transferStatus string, archive string, limit int, offset int) ([]models.Order, int, error) {
 	var orders []models.Order
 	var total int64
 

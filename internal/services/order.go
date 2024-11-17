@@ -186,7 +186,7 @@ func FetchOrders(transferStatus string, archive string, limit int, page int) ([]
 	offset := (page - 1) * limit
 
 	// Query the database
-	orders, total, err := repositories.GetOrdersFromDB(transferStatus, archive, limit, offset)
+	orders, total, err := repositories.GetOrders(transferStatus, archive, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}

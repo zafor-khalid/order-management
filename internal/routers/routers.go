@@ -8,11 +8,7 @@ import (
 
 const relativePath = "/api/v1"
 
-// LoadRoutes now accepts services as parameters and passes them to controllers
 func LoadRoutes(router *gin.Engine) {
-
-
-
 	// Root-level health check
 	router.GET("/health", controllers.HealthCheck)
 
@@ -27,14 +23,12 @@ func LoadRoutes(router *gin.Engine) {
 		
 		orders := public.Group("/orders")
 		{
-			orders.GET("/all", controllers.GetOrders)
 			orders.POST("", controllers.CreateOrder) 
+			orders.GET("/all", controllers.GetOrders)
 			orders.PUT("/:consignment_id/cancel", controllers.CancelOrder)
 		}
 	}
 	
-
-
 	// Protected routes group with JWT middleware
 	// protected := router.Group(relativePath)
 	// protected.Use(middlewares.JWTMiddleware())
@@ -46,7 +40,5 @@ func LoadRoutes(router *gin.Engine) {
 	// 		orders.POST("", orderController.Create)
 	// 		orders.PUT("/:id/cancel", orderController.Cancel)
 	// 	}
-
-		
 	// }
 }
