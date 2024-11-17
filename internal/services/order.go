@@ -14,10 +14,16 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func matchAddressToCity(address string) (int) {
-	// Custom logic to map address to a city ID
-	address = strings.ToLower(address)
+type ValidationError struct {
+    Message string              `json:"message"`
+    Type    string              `json:"type"`
+    Code    int                 `json:"code"`
+    Errors  map[string][]string `json:"errors"`
+}
 
+// matchAddressToCity matches an address to a city ID
+func matchAddressToCity(address string) (int) {
+	address = strings.ToLower(address)
 	switch {
 	case strings.Contains(address, "dhaka"):
 		return 1
@@ -27,7 +33,6 @@ func matchAddressToCity(address string) (int) {
 		return 0
 	}
 }
-
 
 // generateConsignmentID creates a unique 12-character consignment ID
 func generateConsignmentID() (string, error) {
@@ -47,9 +52,6 @@ func CreateOrder(order models.Order) (models.Order, error) {
 	order.CodFee = calculateCODFee(order.AmountToCollect)
 	
 	matchedCity := matchAddressToCity(order.RecipientAddress)
-
-	
-	// todo: area and city id should be matched from the address
 	
 	order.StoreID = 131172
 	order.DeliveryType = 48
@@ -79,6 +81,7 @@ func CreateOrder(order models.Order) (models.Order, error) {
 	return createdOrder, nil
 }
 
+// calculateDeliveryFee calculates the delivery fee based on the city and weight
 func calculateDeliveryFee(city int, weight float64) float64 {
 	if city == 1 {
 		// Delivery fee logic for Dhaka
@@ -93,10 +96,10 @@ func calculateDeliveryFee(city int, weight float64) float64 {
 	return 100
 }
 
+// calculateCODFee calculates the COD fee based on the amount to collect
 func calculateCODFee(amountToCollect float64) float64 {
 	return amountToCollect * 0.01
 }
-
 
 // GetValidationErrors parses binding or validation errors into a structured map
 func GetValidationErrors(err error) map[string][]string {
@@ -110,9 +113,6 @@ func GetValidationErrors(err error) map[string][]string {
 			errors[fieldName] = append(errors[fieldName], errorMessage)
 		}
 	}
-
-	// Additional errors (e.g., custom validation logic)
-	// Add more error details here if needed
 
 	return errors
 }
@@ -135,13 +135,7 @@ func generateErrorMessage(fieldErr validator.FieldError) string {
 	}
 }
 
-type ValidationError struct {
-    Message string              `json:"message"`
-    Type    string              `json:"type"`
-    Code    int                 `json:"code"`
-    Errors  map[string][]string `json:"errors"`
-}
-
+// ValidateOrderRequest validates the order request fields
 func ValidateOrderRequest(order *models.Order) error {
     errors := make(map[string][]string)
 
@@ -162,8 +156,6 @@ func ValidateOrderRequest(order *models.Order) error {
 	if order.AmountToCollect == 0 {
 		errors["amount_to_collect"] = append(errors["amount_to_collect"], "The amount to collect field is required.")
 	}
-	
-
 
     if len(errors) > 0 {
         return &ValidationError{
@@ -176,11 +168,12 @@ func ValidateOrderRequest(order *models.Order) error {
     return nil
 }
 
+// Error method for ValidationError
 func (ve *ValidationError) Error() string {
     return ve.Message
 }
 
-
+// FetchOrders retrieves and formats orders for the JSON response
 func FetchOrders(transferStatus string, archive string, limit int, page int) ([]map[string]interface{}, int, error) {
 	// Calculate offset for pagination
 	offset := (page - 1) * limit
