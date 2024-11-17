@@ -32,7 +32,6 @@ func CancelOrder(consignmentID string) error {
 		return fmt.Errorf("failed to cancel order: %v", err)
 	}
 
-	// Return success
 	return nil
 }
 

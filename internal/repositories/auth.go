@@ -14,6 +14,7 @@ func CreateUser(user models.User) error {
 	return nil
 }
 
+// GetUserByEmail returns the user with the given email
 func GetUserByEmail(email string) (models.User, error) {
 	var user models.User
 	if err := config.DB.Where("email = ?", email).First(&user).Error; err != nil {
