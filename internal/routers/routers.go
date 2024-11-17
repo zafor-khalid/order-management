@@ -27,9 +27,9 @@ func LoadRoutes(router *gin.Engine) {
 		
 		orders := public.Group("/orders")
 		{
-			orders.GET("", controllers.NewOrderController().GetAll)
-			orders.POST("", controllers.NewOrderController().Create)
-			orders.PUT("/:id/cancel", controllers.NewOrderController().Cancel)
+			orders.GET("", controllers.GetOrders)
+			orders.POST("", controllers.CreateOrder) 
+			orders.PUT("/:consignment_id/cancel", controllers.CancelOrder)
 		}
 	}
 	
