@@ -3,6 +3,7 @@ package services
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"order-management/internal/models"
 	"order-management/internal/repositories"
@@ -216,4 +217,29 @@ func FetchOrders(transferStatus string, archive string, limit int, page int) ([]
 	}
 
 	return formattedOrders, total, nil
+}
+
+
+// CancelOrder attempts to cancel an order and update its status in the database
+func CancelOrder(orderID string) error {
+	// Retrieve the order from the database
+	order, err := repositories.GetOrderByID(orderID)
+	if err != nil {
+		return err
+	}
+
+	// Check if the order is in a cancellable state
+	if order.Status != "Pending" {
+		// If the order cannot be canceled, return an error
+		return errors.New("order cannot be canceled")
+	}
+
+	// Update the order status to 'Canceled'
+	order.Status = "Canceled"
+	err = repositories.UpdateOrderStatus(order)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

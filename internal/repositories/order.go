@@ -68,3 +68,22 @@ func GetOrdersFromDB(transferStatus string, archive string, limit int, offset in
 
 	return orders, int(total), nil
 }
+
+// GetOrderByID fetches an order from the database by its ID
+func GetOrderByID(ConsignmentID string) (*models.Order, error) {
+	var order models.Order
+	err := config.DB.Where("consignment_id = ?", ConsignmentID).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+// UpdateOrderStatus updates the status of the given order in the database
+func UpdateOrderStatus(order *models.Order) error {
+	err := config.DB.Save(order).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}

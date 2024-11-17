@@ -121,23 +121,27 @@ func GetOrders(c *gin.Context) {
 }
 
 
-// CancelOrder cancels an order by its consignment ID
+// CancelOrder handles the cancellation of an order
 func CancelOrder(c *gin.Context) {
-	// consignmentID := c.Param("consignment_id")
+	// Retrieve the order ID from the URL parameter
+	consignmentID := c.Param("consignment_id")
 
-	// // Call the service to cancel the order
-	// err := services.CancelOrder(consignmentID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"message": "Failed to cancel order",
-	// 		"type":    "error",
-	// 		"code":    http.StatusInternalServerError,
-	// 	})
-	// 	return
-	// }
+	// Call the service to cancel the order
+	err := services.CancelOrder(consignmentID)
+	if err != nil {
+		// If cancellation fails, return a 400 error
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Please contact cx to cancel order",
+			"type":    "error",
+			"code":    400,
+		})
+		return
+	}
 
-	// // Send success response
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"message": "Order cancelled successfully",
-	// })
+	// If cancellation is successful, return a 200 success response
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Order Cancelled Successfully",
+		"type":    "success",
+		"code":    200,
+	})
 }
